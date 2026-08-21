@@ -1,6 +1,7 @@
 /**
  * Team Work Status Dashboard
  * ZIP Based File Exchange Manual Tracker - Connected to PostgreSQL
+ * With Multi-Dev Project Coordination & Completion Alerts
  */
 
 // State
@@ -46,6 +47,10 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelModalBtn = document.getElementById('cancelModalBtn');
 const deleteEntryBtn = document.getElementById('deleteEntryBtn');
 
+// Same Project Notice
+const sameProjectNotice = document.getElementById('sameProjectNotice');
+const sameProjectNoticeText = document.getElementById('sameProjectNoticeText');
+
 // Status Modal
 const statusModal = document.getElementById('statusModal');
 const statusModalMember = document.getElementById('statusModalMember');
@@ -64,6 +69,15 @@ const closeAllFilesModalBtn = document.getElementById('closeAllFilesModalBtn');
 const closeAllFilesBtn = document.getElementById('closeAllFilesBtn');
 const copyAllFilesBtn = document.getElementById('copyAllFilesBtn');
 let currentViewingFiles = [];
+
+// Sync Alert Modal (Completion Notice)
+const syncAlertModal = document.getElementById('syncAlertModal');
+const syncAlertCompletedText = document.getElementById('syncAlertCompletedText');
+const syncCoworkersList = document.getElementById('syncCoworkersList');
+const syncCopyableMessage = document.getElementById('syncCopyableMessage');
+const copySyncMessageBtn = document.getElementById('copySyncMessageBtn');
+const closeSyncAlertBtn = document.getElementById('closeSyncAlertBtn');
+const doneSyncAlertBtn = document.getElementById('doneSyncAlertBtn');
 
 // Form error fields
 const memberNameError = document.getElementById('memberNameError');
@@ -146,6 +160,42 @@ function updateCodebaseFilterOptions() {
   });
 }
 
+// Check if multiple developers are working on the same codebase
+function getActiveCodebaseDevCount(codebase) {
+  if (!codebase) return 0;
+  return entries.filter(e => e.status === 'working' && e.codebase.toLowerCase() === codebase.toLowerCase()).length;
+}
+
+// Check other developers working on the same codebase
+function checkSameProjectCollaborators() {
+  const selectedCodebase = codebaseInput.value.trim().toLowerCase();
+  const currentMember = memberNameInput.value.trim().toLowerCase();
+
+  if (!selectedCodebase) {
+    sameProjectNotice.style.display = 'none';
+    return;
+  }
+
+  const otherActiveDevs = entries.filter(e => {
+    const isSameCodebase = (e.codebase || '').trim().toLowerCase() === selectedCodebase;
+    const isWorking = e.status === 'working';
+    const isDifferentEntry = currentEditingId ? e.id.toString() !== currentEditingId.toString() : true;
+    const isDifferentPerson = currentMember ? (e.memberName || '').trim().toLowerCase() !== currentMember : true;
+    return isSameCodebase && isWorking && isDifferentEntry && isDifferentPerson;
+  });
+
+  if (otherActiveDevs.length > 0) {
+    const devNamesList = otherActiveDevs.map(d => `<strong>${escapeHtml(d.memberName)}</strong> (Task: <code>${escapeHtml(d.task)}</code>)`).join(', ');
+    sameProjectNoticeText.innerHTML = `⚠️ ${devNamesList} is already actively working on this codebase. Please keep on updating and coordinate file changes with them to avoid ZIP conflicts!`;
+    sameProjectNotice.style.display = 'block';
+  } else {
+    sameProjectNotice.style.display = 'none';
+  }
+}
+
+codebaseInput.addEventListener('input', checkSameProjectCollaborators);
+memberNameInput.addEventListener('input', checkSameProjectCollaborators);
+
 // Rendering Dashboard Tables
 function renderDashboard() {
   const searchTerm = searchInput.value.trim().toLowerCase();
@@ -194,7 +244,7 @@ function renderTableRows(tbody, items, type) {
     const tr = document.createElement('tr');
     tr.dataset.id = item.id;
 
-    // Files rendering: show first 4 files, and "+ N more" if exceeded
+    // Files rendering
     const MAX_VISIBLE_FILES = 4;
     const fileCount = (item.files || []).length;
     let filesHtml = '<ul class="files-list">';
@@ -231,10 +281,19 @@ function renderTableRows(tbody, items, type) {
       ? `<span class="timestamp-text">${escapeHtml(item.lastUpdated || '-')}</span>`
       : `<span class="timestamp-text">${escapeHtml(item.completedOn || item.lastUpdated || '-')}</span>`;
 
+    // Multi-dev tag if 2 or more working on this codebase
+    const activeDevCount = type === 'working' ? getActiveCodebaseDevCount(item.codebase) : 0;
+    const multiDevBadge = (type === 'working' && activeDevCount > 1) 
+      ? `<br><span class="multi-dev-tag" title="Multiple developers are actively working on this codebase">⚠️ ${activeDevCount} Devs Working</span>` 
+      : '';
+
     tr.innerHTML = `
       <td class="text-center row-index">${index + 1}</td>
       <td><div class="member-name">${escapeHtml(item.memberName)}</div></td>
-      <td><div class="codebase-name">${escapeHtml(item.codebase)}</div></td>
+      <td>
+        <div class="codebase-name">${escapeHtml(item.codebase)}</div>
+        ${multiDevBadge}
+      </td>
       <td><span class="task-name">${escapeHtml(item.task)}</span></td>
       <td><div class="comment-text">${escapeHtml(item.comment)}</div></td>
       <td>${filesHtml}</td>
@@ -343,6 +402,7 @@ function openAddModal() {
   fileTagInput.value = '';
   currentModalFiles = [];
   deleteEntryBtn.style.display = 'none';
+  sameProjectNotice.style.display = 'none';
 
   const workingRadio = document.querySelector('input[name="statusRadio"][value="working"]');
   if (workingRadio) workingRadio.checked = true;
@@ -373,6 +433,7 @@ window.openEditModal = function(id) {
 
   clearFormErrors();
   renderFileTags();
+  checkSameProjectCollaborators();
   entryModal.classList.add('active');
   memberNameInput.focus();
 };
@@ -381,6 +442,7 @@ function closeEntryModal() {
   entryModal.classList.remove('active');
   currentEditingId = null;
   currentModalFiles = [];
+  sameProjectNotice.style.display = 'none';
   clearFormErrors();
 }
 
@@ -391,6 +453,45 @@ function clearFormErrors() {
   commentError.style.display = 'none';
   filesError.style.display = 'none';
   document.querySelectorAll('.form-group').forEach(g => g.classList.remove('has-error'));
+}
+
+// Trigger Completion Alert if someone completes work on a shared codebase
+function triggerCompletionSyncAlert(completedEntry) {
+  const targetCodebase = (completedEntry.codebase || '').trim().toLowerCase();
+  const completedMember = completedEntry.memberName;
+
+  // Find other developers currently WORKING on this same codebase
+  const otherWorkingDevs = entries.filter(e => {
+    return e.status === 'working' && 
+           (e.codebase || '').trim().toLowerCase() === targetCodebase && 
+           e.id.toString() !== completedEntry.id.toString() &&
+           (e.memberName || '').trim().toLowerCase() !== (completedMember || '').trim().toLowerCase();
+  });
+
+  if (otherWorkingDevs.length === 0) return;
+
+  // Populate Alert Modal
+  syncAlertCompletedText.innerHTML = `🎉 <strong>${escapeHtml(completedMember)}</strong> has marked <code>${escapeHtml(completedEntry.task)}</code> as <strong>COMPLETED</strong> on <strong>${escapeHtml(completedEntry.codebase)}</strong>!`;
+
+  syncCoworkersList.innerHTML = '';
+  const coworkerNames = [];
+  otherWorkingDevs.forEach(dev => {
+    coworkerNames.push(dev.memberName);
+    const li = document.createElement('li');
+    li.innerHTML = `<span>👤 <strong>${escapeHtml(dev.memberName)}</strong> — Working on <code>${escapeHtml(dev.task)}</code></span>`;
+    syncCoworkersList.appendChild(li);
+  });
+
+  const filesListStr = (completedEntry.files && completedEntry.files.length > 0)
+    ? `\nFiles changed:\n- ` + completedEntry.files.join('\n- ')
+    : '';
+
+  const readyMessage = `Hey ${coworkerNames.join(', ')}!\n` +
+    `I have just completed my task "${completedEntry.task}" on ${completedEntry.codebase}.\n` +
+    `Please sync with my latest ZIP file before continuing your changes to avoid merge conflicts!${filesListStr}`;
+
+  syncCopyableMessage.value = readyMessage;
+  syncAlertModal.classList.add('active');
 }
 
 // Save Entry Form -> Calls PostgreSQL API
@@ -448,8 +549,10 @@ entryForm.addEventListener('submit', async (e) => {
   };
 
   try {
+    let savedEntry = null;
+
     if (currentEditingId) {
-      // PUT update
+      const prevEntry = entries.find(e => e.id.toString() === currentEditingId.toString());
       const res = await fetch(`/api/entries/${currentEditingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -457,9 +560,14 @@ entryForm.addEventListener('submit', async (e) => {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to update');
+      savedEntry = data.entry;
       showToast(`Updated entry for ${memberName} in PostgreSQL`);
+
+      // Check if transitioned to completed
+      if (prevEntry && prevEntry.status === 'working' && status === 'completed') {
+        triggerCompletionSyncAlert(savedEntry);
+      }
     } else {
-      // POST insert
       const res = await fetch('/api/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -467,7 +575,12 @@ entryForm.addEventListener('submit', async (e) => {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to create');
+      savedEntry = data.entry;
       showToast(`Saved ${memberName}'s entry into PostgreSQL`);
+
+      if (status === 'completed') {
+        triggerCompletionSyncAlert(savedEntry);
+      }
     }
 
     closeEntryModal();
@@ -526,6 +639,7 @@ document.querySelectorAll('.status-option-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     if (!currentStatusTargetId) return;
     const targetStatus = btn.dataset.status;
+    const currentEntry = entries.find(e => e.id.toString() === currentStatusTargetId.toString());
 
     try {
       const res = await fetch(`/api/entries/${currentStatusTargetId}/status`, {
@@ -536,13 +650,39 @@ document.querySelectorAll('.status-option-btn').forEach(btn => {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Status update failed');
 
+      const updatedEntry = data.entry;
       closeStatusModal();
       showToast(`Status updated to ${targetStatus.toUpperCase()} in PostgreSQL`);
+      
+      // If switched from working to completed, trigger co-worker alert
+      if (currentEntry && currentEntry.status === 'working' && targetStatus === 'completed') {
+        triggerCompletionSyncAlert(updatedEntry);
+      }
+
       await fetchEntries();
     } catch (err) {
       alert('Error updating status: ' + err.message);
     }
   });
+});
+
+// Sync Alert Modal Copy Button
+copySyncMessageBtn.addEventListener('click', () => {
+  const text = syncCopyableMessage.value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied notification message to clipboard!');
+  }).catch(() => {
+    showToast('Failed to copy text');
+  });
+});
+
+closeSyncAlertBtn.addEventListener('click', () => {
+  syncAlertModal.classList.remove('active');
+});
+
+doneSyncAlertBtn.addEventListener('click', () => {
+  syncAlertModal.classList.remove('active');
 });
 
 // All Files Modal Logic
@@ -592,12 +732,13 @@ closeAllFilesModalBtn.addEventListener('click', closeAllFilesModal);
 closeAllFilesBtn.addEventListener('click', closeAllFilesModal);
 
 // Close modal on backdrop click
-[entryModal, statusModal, allFilesModal].forEach(modal => {
+[entryModal, statusModal, allFilesModal, syncAlertModal].forEach(modal => {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       if (modal === entryModal) closeEntryModal();
       else if (modal === statusModal) closeStatusModal();
       else if (modal === allFilesModal) closeAllFilesModal();
+      else if (modal === syncAlertModal) syncAlertModal.classList.remove('active');
     }
   });
 });
@@ -608,6 +749,7 @@ document.addEventListener('keydown', (e) => {
     if (entryModal.classList.contains('active')) closeEntryModal();
     if (statusModal.classList.contains('active')) closeStatusModal();
     if (allFilesModal.classList.contains('active')) closeAllFilesModal();
+    if (syncAlertModal.classList.contains('active')) syncAlertModal.classList.remove('active');
   }
 });
 

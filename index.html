@@ -228,6 +228,17 @@
             </div>
           </div>
 
+          <!-- Dynamic Coordination Warning (When another member is already working on same project) -->
+          <div id="sameProjectNotice" class="coordination-notice" style="display: none;">
+            <div class="coordination-header">
+              <span class="notice-icon">⚠️</span>
+              <strong>Active Dev Coordination Alert</strong>
+            </div>
+            <div id="sameProjectNoticeText" class="coordination-body">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="taskInput" class="form-label required">Task / Function</label>
             <input 
@@ -385,6 +396,50 @@
           Copy File List
         </button>
         <button type="button" id="closeAllFilesBtn" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM SYNC / CO-WORKER COMPLETION NOTIFICATION MODAL -->
+  <div id="syncAlertModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header modal-header-alert">
+        <div class="modal-title-with-icon">
+          <span class="alert-bell-icon">🔔</span>
+          <h3 class="modal-title">Task Completed — Inform Collaborators!</h3>
+        </div>
+        <button id="closeSyncAlertBtn" class="modal-close-btn" aria-label="Close modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="sync-alert-banner">
+          <p class="sync-alert-main-text" id="syncAlertCompletedText">
+            <!-- Dynamically populated: e.g. "Rahul Sharma has completed attachVehicle() on Fleet Management!" -->
+          </p>
+        </div>
+
+        <div class="sync-coworkers-card">
+          <div class="coworkers-header">
+            <strong>👉 Please notify the following dev(s) currently working on this codebase:</strong>
+          </div>
+          <ul id="syncCoworkersList" class="sync-coworkers-list">
+            <!-- Dynamically populated: e.g. "Amit Verma (Working on calculateFine())" -->
+          </ul>
+        </div>
+
+        <div class="sync-message-box">
+          <label for="syncCopyableMessage" class="form-label">Ready-to-Send Message (Copy & paste to WhatsApp / Slack / Teams):</label>
+          <textarea id="syncCopyableMessage" class="form-control font-code" rows="3" readonly></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="copySyncMessageBtn" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy Message</span>
+        </button>
+        <button type="button" id="doneSyncAlertBtn" class="btn btn-secondary">Got It / Dismiss</button>
       </div>
     </div>
   </div>

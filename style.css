@@ -1265,6 +1265,138 @@ body {
 }
 
 /* ==========================================================================
+   Coordination & Team Sync Alert Styles
+   ========================================================================== */
+
+.coordination-notice {
+  background-color: #fffbeb;
+  border: 1px solid #fde047;
+  border-left: 4px solid #eab308;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin: 2px 0 6px;
+  font-size: 0.78rem;
+  color: #78350f;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.coordination-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #92400e;
+  margin-bottom: 3px;
+}
+
+.coordination-body {
+  line-height: 1.35;
+}
+
+.coordination-body strong {
+  color: #713f12;
+}
+
+/* Multi-dev working badge in table */
+.multi-dev-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 1px 6px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Sync Alert Modal Styling */
+.modal-header-alert {
+  background: #fefce8;
+  border-bottom: 1px solid #fef08a;
+}
+
+.modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-bell-icon {
+  font-size: 1.2rem;
+}
+
+.sync-alert-banner {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.sync-alert-main-text {
+  font-size: 0.86rem;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.sync-coworkers-card {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coworkers-header {
+  font-size: 0.8rem;
+  color: #92400e;
+}
+
+.sync-coworkers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-coworkers-list li {
+  font-size: 0.78rem;
+  color: #78350f;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #fef08a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-message-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sync-message-box textarea {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 
@@ -1303,3 +1435,4 @@ body {
     justify-content: space-between;
   }
 }
+
