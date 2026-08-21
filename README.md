@@ -2,18 +2,32 @@
 
 A clean, professional, lightweight team work status dashboard for internal use with ZIP-based code exchange, connected to PostgreSQL.
 
-## Features
+---
 
-- **Live Work Tracking**: WORKING & COMPLETED tables.
-- **Changed Files Tracking**: Track exact file names with quick copy & expand options.
-- **Fast Status Updates**: 1-click status change with automatic timestamps.
-- **PostgreSQL Backend**: Real-time persistence with REST APIs and indexing.
-- **Search & Filters**: Instant multi-attribute search across members, tasks, codebases, and files.
-- **Compact & High-Density UI**: Fits 10+ entries comfortably on screen.
+## 🔑 Required Environment Variables
 
-## Getting Started
+Create a `.env` file in the root directory (or add in **Vercel Project Settings → Environment Variables**):
 
-### 1. Setup PostgreSQL Database
+### For Cloud / Vercel (Recommended):
+```env
+DATABASE_URL=postgresql://username:password@ep-xyz.us-east-2.aws.neon.tech/teamdashboard?sslmode=require
+```
+
+### For Local Development:
+```env
+PORT=3847
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=teamdashboard
+PGUSER=postgres
+PGPASSWORD=your_password
+```
+
+---
+
+## 🚀 Quick Setup
+
+### 1. Setup Local PostgreSQL Database
 
 ```bash
 # Create database
@@ -29,15 +43,25 @@ psql teamdashboard -f schema.sql
 # Install dependencies
 npm install
 
-# Configure .env (optional if using defaults)
+# Copy environment config
 cp .env.example .env
 ```
 
-### 3. Run the Server
+### 3. Run Locally
 
 ```bash
 # Start server
 npm start
 ```
-
 Open [http://localhost:3847](http://localhost:3847) in your browser.
+
+---
+
+## ☁️ Vercel Deployment
+
+1. Push your repository to GitHub.
+2. Import repository in [Vercel](https://vercel.com).
+3. In **Environment Variables**, add:
+   - **Key:** `DATABASE_URL`
+   - **Value:** `postgresql://...` (your Neon/Supabase PostgreSQL connection string)
+4. Click **Deploy**.
