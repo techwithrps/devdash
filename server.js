@@ -240,11 +240,6 @@ app.post('/api/reset-demo', async (req, res) => {
   }
 });
 
-// Fallback route
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Team Work Status Dashboard running on http://localhost:${PORT}`);
