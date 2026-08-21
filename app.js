@@ -26,7 +26,6 @@ const clearSearchBtn = document.getElementById('clearSearchBtn');
 const codebaseFilter = document.getElementById('codebaseFilter');
 const lastUpdatedTime = document.getElementById('lastUpdatedTime');
 const refreshBtn = document.getElementById('refreshBtn');
-const resetDemoBtn = document.getElementById('resetDemoBtn');
 const dbStatusBadge = document.getElementById('dbStatusBadge');
 
 // Modals
@@ -778,21 +777,6 @@ refreshBtn.addEventListener('click', async () => {
     refreshBtn.classList.remove('spinning');
     showToast('Synced with PostgreSQL');
   }, 400);
-});
-
-// Reset Demo Data in PostgreSQL
-resetDemoBtn.addEventListener('click', async () => {
-  if (confirm('Reset database back to initial sample rows in PostgreSQL?')) {
-    try {
-      const res = await fetch('/api/reset-demo', { method: 'POST' });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Reset failed');
-      await fetchEntries();
-      showToast('PostgreSQL demo data restored successfully');
-    } catch (err) {
-      alert('Error resetting demo data: ' + err.message);
-    }
-  }
 });
 
 // Initialize on Load
