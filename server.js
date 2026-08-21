@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 3847;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static assets from public folder and root
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname)));
 
 // Helper to format PostgreSQL row into frontend camelCase format
@@ -208,42 +211,15 @@ app.delete('/api/entries/:id', async (req, res) => {
   }
 });
 
-// 7. POST - Reset to sample seed data in PostgreSQL
-app.post('/api/reset-demo', async (req, res) => {
-  try {
-    await db.query('TRUNCATE work_entries RESTART IDENTITY');
-    
-    const seedInserts = [
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Rahul Sharma', 'Fleet Management', 'attachVehicle()', 'Adding validation for vehicle attachment and improved error handling.', '["VehicleService.ts", "vehicleController.ts", "vehicleRoutes.ts", "Vehicle.ts", "VehicleForm.tsx"]'::jsonb, 'working', '2025-05-22 10:30:00+05:30', NULL)`,
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Amit Verma', 'College ERP', 'calculateFine()', 'Fine calculation logic based on new rules.', '["FeeService.ts", "fineCalculation.ts", "feeController.ts"]'::jsonb, 'working', '2025-05-22 09:15:00+05:30', NULL)`,
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Priya Mehta', 'ICEGATE Automation', 'signFile()', 'Integrating DSC and file signing API.', '["signService.ts", "fileSigner.ts", "icegateApi.ts", "utils.ts"]'::jsonb, 'working', '2025-05-22 09:05:00+05:30', NULL)`,
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Sandeep Kumar', 'Fleet Management', 'VehicleList.tsx', 'UI enhancements for vehicle list page.', '["VehicleList.tsx", "vehicleFilters.ts", "vehicleTypes.ts", "vehicleTable.tsx"]'::jsonb, 'completed', '2025-05-22 08:45:00+05:30', '2025-05-22 08:45:00+05:30')`,
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Neha Singh', 'College ERP', 'generateReceipt()', 'Receipt generation format updated.', '["receiptService.ts", "receiptTemplate.html", "receiptController.ts"]'::jsonb, 'completed', '2025-05-22 08:20:00+05:30', '2025-05-22 08:20:00+05:30')`,
-      `INSERT INTO work_entries (member_name, codebase, task, comment, files, status, last_updated, completed_on)
-       VALUES ('Vikas Patel', 'ElogiPark SQL', 'bedAllotment()', 'Fixing bed allotment conflict issue.', '["bedAllotment.ts", "bedService.ts", "allotmentController.ts"]'::jsonb, 'completed', '2025-05-22 08:10:00+05:30', '2025-05-22 08:10:00+05:30')`
-    ];
-
-    for (const query of seedInserts) {
-      await db.query(query);
-    }
-
-    const all = await db.query('SELECT * FROM work_entries ORDER BY last_updated DESC, id DESC');
-    res.json({ success: true, entries: all.rows.map(formatEntry) });
-  } catch (error) {
-    console.error('Error resetting demo data:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+// Root fallback for direct visits
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Team Work Status Dashboard running on http://localhost:${PORT}`);
-    console.log(`🐘 Connected to PostgreSQL Database: ${process.env.PGDATABASE || 'teamdashboard'}`);
+    console.log(`🐘 Connected to PostgreSQL Database: ${process.env.PGDATABASE || 'neondb'}`);
   });
 }
 
